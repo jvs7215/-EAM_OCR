@@ -26,30 +26,37 @@ async function preprocessImage(imagePath) {
 }
 
 async function processImage(imagePath) {
+    console.log(`[OCR] Starting processing for: ${imagePath}`);
     try {
         // Preprocess the image for better OCR accuracy
-        console.log('Preprocessing image for better OCR...');
+        console.log('[OCR] Preprocessing image...');
         const processedPath = await preprocessImage(imagePath);
+        console.log(`[OCR] Preprocessing complete. New path: ${processedPath}`);
 
+        console.log('[OCR] Starting Tesseract recognition...');
         const result = await Tesseract.recognize(
             processedPath,
             'eng',
             {
-                logger: m => console.log(m),
+                logger: m => console.log(`[Tesseract] ${m.status}: ${Math.round(m.progress * 100)}%`),
                 tessedit_pageseg_mode: Tesseract.PSM.AUTO,
                 preserve_interword_spaces: '1'
             }
         );
+        console.log('[OCR] Tesseract recognition complete.');
 
         // Clean up preprocessed file
         if (processedPath !== imagePath) {
+            console.log('[OCR] Cleaning up preprocessed file...');
             fs.unlink(processedPath, (err) => {
-                if (err) console.error('Error deleting preprocessed file:', err);
+                if (err) console.error('[OCR] Error deleting preprocessed file:', err);
+                else console.log('[OCR] Preprocessed file deleted.');
             });
         }
 
         return result;
     } catch (error) {
+        console.error('[OCR] Fatal Error:', error);
         throw error;
     }
 }

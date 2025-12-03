@@ -11,6 +11,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0, stage: '', fileName: '' });
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.setAttribute('data-theme', !isDarkMode ? 'dark' : 'light');
+  };
 
   const processImageFile = async (file) => {
     const formData = new FormData();
@@ -46,12 +52,14 @@ function App() {
 
         let fileText = '';
         let fileConfidence = 0;
-        let imageUrl = '';
+        let imageUrls = [];
 
         if (file.type === 'application/pdf') {
           setProgress({ current: i + 1, total: totalFiles, stage: 'Converting PDF', fileName: file.name });
           const images = await convertPdfToImages(file);
-          imageUrl = URL.createObjectURL(images[0]); // Preview first page
+
+          // Store all image URLs
+          imageUrls = images.map(img => URL.createObjectURL(img));
 
           let pageTexts = [];
           let totalConf = 0;
@@ -68,7 +76,8 @@ function App() {
 
         } else {
           setProgress({ current: i + 1, total: totalFiles, stage: 'Extracting text', fileName: file.name });
-          imageUrl = URL.createObjectURL(file);
+          const url = URL.createObjectURL(file);
+          imageUrls = [url];
           const data = await processImageFile(file);
           fileText = data.text;
           fileConfidence = data.confidence;
@@ -89,8 +98,7 @@ function App() {
         const yearMatches = fileText.match(/\b(19|20)\d{2}\b/g) || [];
         const years = [...new Set(yearMatches)];
 
-        const moneyMatches = fileText.match(/\$[\d,]+(?:\.\d{2})?/g) || [];
-        const money = [...new Set(moneyMatches)];
+
 
         // Contact info
         const phoneMatches = fileText.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g) || [];
@@ -123,19 +131,28 @@ function App() {
           ...years.slice(0, 3),
           ...dates,
           ...times,
-          ...money.slice(0, 2),
+          ...years.slice(0, 3),
+          ...dates,
+          ...times,
           ...phones.slice(0, 1),
           ...emails.slice(0, 1),
           ...urls,
           ...quoted
-        ])].filter(tag => tag && tag.length > 1).slice(0, 20);
+        ])].filter(tag => {
+          if (!tag) return false;
+          // Filter out short tags (unless it's a year-like number)
+          if (tag.length < 3) return false;
+          // Filter out tags that don't have at least one letter (unless it's a year/date)
+          if (!/[a-zA-Z]/.test(tag) && !/\d{4}/.test(tag)) return false;
+          return true;
+        }).slice(0, 20);
 
         newResults.push({
           id: Date.now() + i,
           fileName: file.name,
           text: fileText,
           confidence: fileConfidence,
-          imageUrl: imageUrl,
+          imageUrls: imageUrls,
           tags: tags
         });
       }
@@ -154,6 +171,34 @@ function App() {
     setError(null);
   };
 
+  const handleAddTag = (resultIndex, newTag) => {
+    if (!newTag || !newTag.trim()) return;
+
+    setResult(prevResults => {
+      const newResults = [...prevResults];
+      const targetResult = { ...newResults[resultIndex] };
+
+      if (!targetResult.tags.includes(newTag)) {
+        targetResult.tags = [...targetResult.tags, newTag];
+        newResults[resultIndex] = targetResult;
+      }
+
+      return newResults;
+    });
+  };
+
+  const handleRemoveTag = (resultIndex, tagToRemove) => {
+    setResult(prevResults => {
+      const newResults = [...prevResults];
+      const targetResult = { ...newResults[resultIndex] };
+
+      targetResult.tags = targetResult.tags.filter(tag => tag !== tagToRemove);
+      newResults[resultIndex] = targetResult;
+
+      return newResults;
+    });
+  };
+
   return (
     <div className="app-container">
       <header className="header">
@@ -163,7 +208,9 @@ function App() {
             <p className="subtitle">Erie Art Museum Document Digitizer</p>
           </div>
           <nav>
-            {/* Placeholder for future nav items */}
+            <button onClick={toggleDarkMode} className="theme-toggle" title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+              {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+            </button>
           </nav>
         </div>
       </header>
@@ -227,7 +274,11 @@ function App() {
             <button onClick={handleReset} className="back-button mb-2">
               ← Process New Documents
             </button>
-            <ResultViewer results={result} />
+            <ResultViewer
+              results={result}
+              onAddTag={handleAddTag}
+              onRemoveTag={handleRemoveTag}
+            />
           </div>
         )}
       </main>
@@ -255,6 +306,23 @@ function App() {
         .subtitle {
           font-size: 0.875rem;
           color: var(--color-text-light);
+        }
+        .theme-toggle {
+          background: var(--color-bg);
+          border: 1px solid var(--color-border);
+          color: var(--color-text);
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          font-size: 0.875rem;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+          background: var(--color-accent);
+          color: white;
+          border-color: var(--color-accent);
+          transform: translateY(-2px);
         }
         .main-content {
           flex: 1;

@@ -4,17 +4,17 @@ A web application for the Erie Art Museum to digitize and catalog archived docum
 
 ## Features
 
-- 🎨 **Modern UI** - Midnight purple/blue theme with intuitive design
-- 📄 **Multi-Document Upload** - Process multiple files simultaneously
-- 🔍 **Advanced OCR** - Image preprocessing for high accuracy text extraction
-- 🏷️ **Auto-Tagging** - Automatically extracts 20+ types of metadata:
+- **Modern UI** - Midnight purple/blue theme with intuitive design
+- **Multi-Document Upload** - Process multiple files simultaneously
+- **Advanced OCR** - Image preprocessing for high accuracy text extraction
+- **Auto-Tagging** - Automatically extracts 20+ types of metadata:
   - People, places, organizations
   - Years, dates, times
   - Money amounts, phone numbers, emails, URLs
   - Quoted text (artwork titles)
-- 📊 **Progress Tracking** - Real-time progress bar with detailed status
-- 💾 **Download** - Export extracted text as .txt files
-- 📱 **Responsive** - Works on desktop and mobile devices
+- **Progress Tracking** - Real-time progress bar with detailed status
+- **Download** - Export extracted text as .txt files
+- **Responsive** - Works on desktop and mobile devices
 
 ## Tech Stack
 

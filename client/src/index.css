@@ -2,19 +2,23 @@
   --font-main: 'Inter', sans-serif;
   --font-display: 'Outfit', sans-serif;
 
-  /* Midnight Purple/Blue Theme */
-  --color-bg: #0f111a;
-  /* Very dark blue-purple */
-  --color-surface: #1a1d2d;
-  /* Lighter blue-purple surface */
-  --color-surface-hover: #23273a;
-  /* Hover state for surface */
-  --color-primary: #ffffff;
-  --color-accent: #818cf8;
-  /* Indigo/Periwinkle */
-  --color-text: #e2e8f0;
-  --color-text-light: #94a3b8;
-  --color-border: #2d3348;
+  /* Soft Light Theme */
+  --color-bg: #f8fafc;
+  /* Slate-50 */
+  --color-surface: #ffffff;
+  /* White */
+  --color-surface-hover: #f1f5f9;
+  /* Slate-100 */
+  --color-primary: #0f172a;
+  /* Slate-900 (Text headings) */
+  --color-accent: #6366f1;
+  /* Indigo-500 */
+  --color-text: #334155;
+  /* Slate-700 */
+  --color-text-light: #64748b;
+  /* Slate-500 */
+  --color-border: #e2e8f0;
+  /* Slate-200 */
 
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -23,6 +27,22 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
+}
+
+/* Dark Mode Theme */
+[data-theme="dark"] {
+  --color-bg: #0f111a;
+  --color-surface: #1a1d2d;
+  --color-surface-hover: #23273a;
+  --color-primary: #ffffff;
+  --color-accent: #818cf8;
+  --color-text: #e2e8f0;
+  --color-text-light: #94a3b8;
+  --color-border: #2d3348;
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 * {
