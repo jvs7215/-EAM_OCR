@@ -26,15 +26,17 @@ A web application for the Erie Art Museum to digitize and catalog archived docum
 
 ### Backend
 - Node.js + Express
-- Tesseract.js (OCR engine)
-- Sharp (image preprocessing)
+- PaddleOCR (OCR engine via Python service)
+- FastAPI (Python OCR service)
 - Multer (file uploads)
 
 ## Installation
 
 ### Prerequisites
 - Node.js (v14 or higher)
+- Python 3.7+ (for PaddleOCR)
 - npm or yarn
+- pip (Python package manager)
 
 ### Setup
 
@@ -56,23 +58,48 @@ cd ../server
 npm install
 ```
 
+4. Install Python OCR dependencies:
+```bash
+npm run install:python-deps
+```
+Or manually:
+```bash
+cd server
+pip install -r requirements.txt
+```
+
 ## Running the Application
 
-1. Start the backend server:
+**Quick Start (Recommended):**
+```bash
+npm run dev
+```
+This starts all services:
+- Python OCR Service (port 3001)
+- Node.js Server (port 3000)
+- React Client (port 5173)
+
+**Or run separately:**
+
+1. Start Python OCR service:
+```bash
+cd server
+python ocr_service.py
+```
+
+2. Start Node.js server:
 ```bash
 cd server
 node index.js
 ```
-The server will run on `http://localhost:3000`
 
-2. Start the frontend dev server:
+3. Start React client:
 ```bash
 cd client
 npm run dev
 ```
-The frontend will run on `http://localhost:5173`
 
-3. Open your browser and navigate to `http://localhost:5173`
+4. Open your browser and navigate to `http://localhost:5173`
 
 ## Usage
 
@@ -105,7 +132,9 @@ EAM_OCR/
 │   └── package.json
 ├── server/              # Backend Node.js server
 │   ├── index.js         # Express server
-│   ├── ocr.js           # OCR processing logic
+│   ├── ocr.js           # OCR processing logic (calls Python service)
+│   ├── ocr_service.py   # Python FastAPI OCR service
+│   ├── requirements.txt  # Python dependencies
 │   ├── uploads/         # Temporary file storage
 │   └── package.json
 └── README.md
@@ -117,6 +146,10 @@ Internal tool for Erie Art Museum.
 
 ## Acknowledgments
 
-- Built with Tesseract.js OCR engine
+- Built with PaddleOCR (deep learning OCR engine)
 - NLP powered by Compromise
-- Image processing by Sharp
+- Python OCR service powered by FastAPI
+
+## Migration Notes
+
+This project was migrated from Tesseract.js to PaddleOCR for improved accuracy. See `SETUP_PADDLEOCR.md` for migration details.

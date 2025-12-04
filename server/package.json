@@ -13,7 +13,7 @@
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "multer": "^2.0.2",
-    "sharp": "^0.34.5",
-    "tesseract.js": "^6.0.1"
+    "sharp": "^0.33.0",
+    "tesseract.js": "^5.0.4"
   }
 }

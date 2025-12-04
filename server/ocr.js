@@ -1,64 +1,85 @@
 const Tesseract = require('tesseract.js');
 const sharp = require('sharp');
-const path = require('path');
 const fs = require('fs');
 
+/**
+ * Preprocess image for better OCR accuracy
+ * @param {string} imagePath - Path to the image file
+ * @returns {Promise<Buffer>} - Preprocessed image buffer
+ */
 async function preprocessImage(imagePath) {
-    try {
-        const preprocessedPath = imagePath.replace(path.extname(imagePath), '_processed.png');
-
-        await sharp(imagePath)
-            .resize(3000, 3000, { // Increase resolution
-                fit: 'inside',
-                withoutEnlargement: false
-            })
-            .greyscale() // Convert to grayscale
-            .normalize() // Normalize contrast
-            .sharpen() // Sharpen edges
-            .threshold(128) // Binarize (black & white)
-            .toFile(preprocessedPath);
-
-        return preprocessedPath;
-    } catch (error) {
-        console.error('Preprocessing error:', error);
-        return imagePath; // Fall back to original if preprocessing fails
+  try {
+    const image = sharp(imagePath);
+    const metadata = await image.metadata();
+    
+    // Resize if too large (max 2000px on longest side for faster processing)
+    let processed = image;
+    if (metadata.width > 2000 || metadata.height > 2000) {
+      const maxDimension = Math.max(metadata.width, metadata.height);
+      const scale = 2000 / maxDimension;
+      processed = processed.resize(Math.round(metadata.width * scale), Math.round(metadata.height * scale));
     }
+    
+    // Apply preprocessing for better OCR
+    return await processed
+      .greyscale() // Convert to grayscale
+      .normalize() // Normalize contrast
+      .sharpen() // Sharpen edges
+      .toBuffer();
+  } catch (error) {
+    console.error('[OCR] Image preprocessing error:', error);
+    // If preprocessing fails, return original image
+    return fs.readFileSync(imagePath);
+  }
 }
 
+/**
+ * Process image using Tesseract OCR
+ * @param {string} imagePath - Path to the image file
+ * @returns {Promise<{data: {text: string, confidence: number}}>}
+ */
 async function processImage(imagePath) {
-    console.log(`[OCR] Starting processing for: ${imagePath}`);
-    try {
-        // Preprocess the image for better OCR accuracy
-        console.log('[OCR] Preprocessing image...');
-        const processedPath = await preprocessImage(imagePath);
-        console.log(`[OCR] Preprocessing complete. New path: ${processedPath}`);
-
-        console.log('[OCR] Starting Tesseract recognition...');
-        const result = await Tesseract.recognize(
-            processedPath,
-            'eng',
-            {
-                logger: m => console.log(`[Tesseract] ${m.status}: ${Math.round(m.progress * 100)}%`),
-                tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-                preserve_interword_spaces: '1'
-            }
-        );
-        console.log('[OCR] Tesseract recognition complete.');
-
-        // Clean up preprocessed file
-        if (processedPath !== imagePath) {
-            console.log('[OCR] Cleaning up preprocessed file...');
-            fs.unlink(processedPath, (err) => {
-                if (err) console.error('[OCR] Error deleting preprocessed file:', err);
-                else console.log('[OCR] Preprocessed file deleted.');
-            });
-        }
-
-        return result;
-    } catch (error) {
-        console.error('[OCR] Fatal Error:', error);
-        throw error;
+  console.log(`[OCR] Starting Tesseract processing for: ${imagePath}`);
+  
+  try {
+    // Check if file exists
+    if (!fs.existsSync(imagePath)) {
+      throw new Error(`Image file not found: ${imagePath}`);
     }
+
+    // Preprocess image for better OCR accuracy
+    console.log('[OCR] Preprocessing image...');
+    const preprocessedBuffer = await preprocessImage(imagePath);
+    
+    try {
+      console.log('[OCR] Running Tesseract OCR...');
+      
+      // Run Tesseract OCR - use buffer directly for better compatibility
+      const { data } = await Tesseract.recognize(preprocessedBuffer, 'eng', {
+        logger: m => {
+          if (m.status === 'recognizing text') {
+            console.log(`[OCR] Progress: ${Math.round(m.progress * 100)}%`);
+          }
+        }
+      });
+      
+      console.log(`[OCR] Tesseract processing complete. Confidence: ${data.confidence.toFixed(2)}%`);
+      
+      return {
+        data: {
+          text: data.text || '',
+          confidence: data.confidence || 0
+        }
+      };
+      
+    } catch (ocrError) {
+      throw ocrError;
+    }
+    
+  } catch (error) {
+    console.error('[OCR] Fatal Error:', error);
+    throw error;
+  }
 }
 
 module.exports = { processImage };

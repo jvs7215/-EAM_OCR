@@ -8,7 +8,12 @@ const app = express();
 const port = 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 
 // Configure Multer for file uploads
@@ -50,7 +55,11 @@ app.post('/api/ocr', upload.single('image'), async (req, res) => {
     });
   } catch (error) {
     console.error('OCR Error:', error);
-    res.status(500).json({ error: 'Failed to process image' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to process image',
+      details: error.message || 'Unknown error'
+    });
   }
 });
 

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "dev": "concurrently \"npm run server\" \"npm run client\"",
+        "dev": "concurrently -n \"server,client\" -c \"blue,yellow\" \"npm run server\" \"npm run client\"",
         "client": "cd client && npm run dev",
         "server": "cd server && node index.js",
         "install:all": "npm install && cd client && npm install && cd server && npm install"

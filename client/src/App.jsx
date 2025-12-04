@@ -22,16 +22,26 @@ function App() {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch('http://localhost:3000/api/ocr', {
-      method: 'POST',
-      body: formData,
-    });
+    try {
+      const response = await fetch('http://localhost:3000/api/ocr', {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!response.ok) {
-      throw new Error('OCR processing failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('OCR Error:', errorData);
+        throw new Error(errorData.error || 'OCR processing failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('OCR Request Error:', error);
+      if (error.message === 'Failed to fetch' || error.message.includes('NetworkError')) {
+        throw new Error('Cannot connect to OCR server. Please make sure the server is running on http://localhost:3000');
+      }
+      throw error;
     }
-
-    return await response.json();
   };
 
   const handleUpload = async (files) => {
@@ -159,8 +169,8 @@ function App() {
 
       setResult(newResults);
     } catch (err) {
-      console.error(err);
-      setError('Failed to process one or more documents. Please try again.');
+      console.error('Upload Error:', err);
+      setError(err.message || 'Failed to process one or more documents. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -204,7 +214,7 @@ function App() {
       <header className="header">
         <div className="container flex items-center justify-between">
           <div className="logo">
-            <h1>EAM<span style={{ color: 'var(--color-accent)' }}>OCR</span></h1>
+            <h1><span className="logo-eam">EAM</span><span className="logo-ocr">OCR</span></h1>
             <p className="subtitle">Erie Art Museum Document Digitizer</p>
           </div>
           <nav>
@@ -285,6 +295,7 @@ function App() {
 
       <footer className="footer text-center">
         <p>© {new Date().getFullYear()} Erie Art Museum. Internal Tool.</p>
+        <p className="footer-credit">Powered by Tesseract OCR</p>
       </footer>
 
       <style>{`
@@ -294,35 +305,60 @@ function App() {
           flex-direction: column;
         }
         .header {
-          padding: 2rem 0;
+          padding: 1.5rem 0;
           background: var(--color-surface);
+          backdrop-filter: var(--blur-lg);
+          -webkit-backdrop-filter: var(--blur-lg);
           border-bottom: 1px solid var(--color-border);
-          margin-bottom: 3rem;
+          margin-bottom: 4rem;
+          box-shadow: var(--shadow-glass);
+          position: sticky;
+          top: 0;
+          z-index: 100;
         }
         .logo h1 {
-          font-size: 1.5rem;
-          letter-spacing: -0.02em;
+          font-size: 1.75rem;
+          letter-spacing: -0.03em;
+          font-family: var(--font-display);
+          font-weight: 700;
+        }
+        .logo-eam {
+          color: #8b5cf6;
+        }
+        .logo-ocr {
+          color: var(--color-accent);
+        }
+        [data-theme="dark"] .logo-eam {
+          color: #a78bfa;
         }
         .subtitle {
           font-size: 0.875rem;
           color: var(--color-text-light);
+          font-weight: 400;
+          margin-top: 0.25rem;
         }
         .theme-toggle {
-          background: var(--color-bg);
+          background: var(--color-surface);
+          backdrop-filter: var(--blur-md);
+          -webkit-backdrop-filter: var(--blur-md);
           border: 1px solid var(--color-border);
           color: var(--color-text);
-          padding: 0.5rem 1rem;
-          border-radius: var(--radius-sm);
+          padding: 0.625rem 1.25rem;
+          border-radius: var(--radius-full);
           cursor: pointer;
           font-size: 0.875rem;
-          font-weight: 500;
-          transition: all 0.2s;
+          font-weight: 600;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          box-shadow: var(--shadow-sm);
         }
         .theme-toggle:hover {
-          background: var(--color-accent);
-          color: white;
+          background: var(--color-surface-hover);
           border-color: var(--color-accent);
           transform: translateY(-2px);
+          box-shadow: var(--shadow-md);
         }
         .main-content {
           flex: 1;
@@ -330,76 +366,123 @@ function App() {
           padding-bottom: 4rem;
         }
         .hero-text h2 {
-          font-size: 2.5rem;
-          margin-bottom: 0.5rem;
+          font-size: 3rem;
+          margin-bottom: 1rem;
+          font-family: var(--font-display);
+          font-weight: 700;
+          background: var(--gradient-accent);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          line-height: 1.2;
         }
         .hero-text p {
           color: var(--color-text-light);
-          font-size: 1.125rem;
+          font-size: 1.25rem;
+          font-weight: 400;
+          max-width: 600px;
+          margin: 0 auto;
         }
         .error-message {
-          margin-top: 1rem;
-          padding: 1rem;
-          background: #fee2e2;
-          color: #dc2626;
-          border-radius: var(--radius-sm);
+          margin-top: 1.5rem;
+          padding: 1rem 1.5rem;
+          background: var(--color-error-light);
+          color: var(--color-error);
+          border-radius: var(--radius-md);
           text-align: center;
-        }
-        .info-section {
-          margin-top: 3rem;
-          padding: 2rem;
-          background: var(--color-surface);
-          border-radius: var(--radius-lg);
+          font-weight: 500;
+          border: 1px solid var(--color-error);
+          box-shadow: var(--shadow-sm);
           max-width: 600px;
           margin-left: auto;
           margin-right: auto;
         }
+        .info-section {
+          margin-top: 4rem;
+          padding: 2.5rem;
+          background: var(--color-surface);
+          backdrop-filter: var(--blur-lg);
+          -webkit-backdrop-filter: var(--blur-lg);
+          border-radius: var(--radius-xl);
+          max-width: 700px;
+          margin-left: auto;
+          margin-right: auto;
+          box-shadow: var(--shadow-glass);
+          border: 1px solid var(--color-border);
+        }
         .info-section h3 {
-          font-size: 1rem;
-          margin-bottom: 0.75rem;
+          font-size: 1.125rem;
+          margin-bottom: 1rem;
           color: var(--color-accent);
+          font-weight: 600;
+          font-family: var(--font-display);
         }
         .info-list {
           list-style: none;
           padding: 0;
-          margin: 0 0 1.5rem 0;
+          margin: 0 0 2rem 0;
         }
         .info-list:last-child {
           margin-bottom: 0;
         }
         .info-list li {
-          padding: 0.5rem 0;
-          color: var(--color-text-light);
+          padding: 0.75rem 0;
+          color: var(--color-text);
           font-size: 0.9375rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
         .back-button {
-          background: none;
-          border: none;
-          color: var(--color-text-light);
-          font-weight: 500;
-          padding: 0.5rem 0;
-          transition: color 0.2s;
+          background: var(--color-surface);
+          backdrop-filter: var(--blur-md);
+          -webkit-backdrop-filter: var(--blur-md);
+          border: 1px solid var(--color-border);
+          color: var(--color-text);
+          font-weight: 600;
+          padding: 0.75rem 1.5rem;
+          border-radius: var(--radius-full);
+          transition: all 0.3s ease;
+          margin-bottom: 1.5rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          box-shadow: var(--shadow-sm);
         }
         .back-button:hover {
-          color: var(--color-primary);
+          background: var(--color-surface-hover);
+          border-color: var(--color-accent);
+          transform: translateX(-4px);
+          box-shadow: var(--shadow-md);
         }
         .footer {
           padding: 2rem;
           color: var(--color-text-light);
           font-size: 0.875rem;
           border-top: 1px solid var(--color-border);
+          background: var(--color-surface);
+          backdrop-filter: var(--blur-md);
+          -webkit-backdrop-filter: var(--blur-md);
+        }
+        .footer-credit {
+          margin-top: 0.5rem;
+          font-size: 0.75rem;
+          opacity: 0.7;
         }
         .loading-section {
           text-align: center;
           padding: 4rem 2rem;
         }
         .progress-container {
-          max-width: 500px;
+          max-width: 550px;
           margin: 0 auto;
           background: var(--color-surface);
-          padding: 2rem;
-          border-radius: var(--radius-lg);
-          box-shadow: var(--shadow-md);
+          backdrop-filter: var(--blur-lg);
+          -webkit-backdrop-filter: var(--blur-lg);
+          padding: 3rem;
+          border-radius: var(--radius-xl);
+          box-shadow: var(--shadow-glass);
+          border: 1px solid var(--color-border);
         }
         .progress-header {
           display: flex;
@@ -418,17 +501,19 @@ function App() {
         }
         .progress-bar-outer {
           width: 100%;
-          height: 8px;
+          height: 12px;
           background: var(--color-border);
-          border-radius: 100px;
+          border-radius: var(--radius-full);
           overflow: hidden;
           margin-bottom: 1.5rem;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .progress-bar-inner {
           height: 100%;
-          background: linear-gradient(90deg, var(--color-accent), #a78bfa);
-          border-radius: 100px;
-          transition: width 0.3s ease;
+          background: var(--gradient-accent);
+          border-radius: var(--radius-full);
+          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
         }
         .progress-details {
           margin-bottom: 1.5rem;
@@ -447,13 +532,13 @@ function App() {
           text-overflow: ellipsis;
         }
         .progress-spinner {
-          width: 40px;
-          height: 40px;
-          border: 3px solid var(--color-border);
+          width: 48px;
+          height: 48px;
+          border: 4px solid var(--color-border);
           border-top-color: var(--color-accent);
           border-radius: 50%;
           margin: 0 auto;
-          animation: spin 1s linear infinite;
+          animation: spin 0.8s linear infinite;
         }
         .loading-spinner {
           width: 60px;
