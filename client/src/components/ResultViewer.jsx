@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 
-export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
+export default function ResultViewer({ results, onAddTag, onRemoveTag, onReset }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [newTag, setNewTag] = useState('');
@@ -227,6 +227,11 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
             </button>
           ))}
         </div>
+        {onReset && (
+          <button onClick={onReset} className="process-new-btn">
+            ← Process New Documents
+          </button>
+        )}
       </div>
 
       {/* Main Comparison View - Side by Side */}
@@ -234,20 +239,27 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
         <div className="card image-card">
           <div className="card-header flex justify-between items-center">
             <h3>Original Document</h3>
-            <div className="zoom-controls">
-              <button onClick={handleZoomOut} className="zoom-btn" title="Zoom Out">
-                −
-              </button>
-              <span className="zoom-level">{Math.round(zoom * 100)}%</span>
-              <button onClick={handleZoomIn} className="zoom-btn" title="Zoom In">
-                +
-              </button>
-              {zoom !== 1 && (
-                <button onClick={handleResetZoom} className="zoom-btn reset" title="Reset Zoom">
-                  ↺
+            {totalPages > 1 && (
+              <div className="page-nav-top">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 0}
+                  className="page-nav-btn"
+                >
+                  ← Back
                 </button>
-              )}
-            </div>
+                <span className="page-indicator">
+                  Page {currentPage + 1} of {totalPages}
+                </span>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className="page-nav-btn"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </div>
           <div 
             className="image-container"
@@ -287,27 +299,22 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
               />
             ) : null}
           </div>
-          {totalPages > 1 && (
-            <div className="page-nav-bottom">
-              <button
-                onClick={handlePrevPage}
-                disabled={currentPage === 0}
-                className="page-nav-btn"
-              >
-                ← Back
+          <div className="card-footer">
+            <div className="zoom-controls">
+              <button onClick={handleZoomOut} className="zoom-btn" title="Zoom Out">
+                −
               </button>
-              <span className="page-indicator">
-                Page {currentPage + 1} of {totalPages}
-              </span>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages - 1}
-                className="page-nav-btn"
-              >
-                Next →
+              <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+              <button onClick={handleZoomIn} className="zoom-btn" title="Zoom In">
+                +
               </button>
+              {zoom !== 1 && (
+                <button onClick={handleResetZoom} className="zoom-btn reset" title="Reset Zoom">
+                  ↺
+                </button>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         <div className="card text-card">
@@ -318,7 +325,43 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
                 {Math.round(selectedResult.confidence)}% Match
               </span>
             </div>
-            <div className="flex gap-2 items-center">
+            {totalTextPages > 1 && (
+              <div className="page-nav-top">
+                <button
+                  onClick={handlePrevTextPage}
+                  disabled={textPage === 0}
+                  className="page-nav-btn"
+                >
+                  ← Back
+                </button>
+                <span className="page-indicator">
+                  Page {textPage + 1} of {totalTextPages}
+                </span>
+                <button
+                  onClick={handleNextTextPage}
+                  disabled={textPage === totalTextPages - 1}
+                  className="page-nav-btn"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="text-content">
+            {isEditing ? (
+              <textarea
+                value={currentText}
+                onChange={handleTextChange}
+                className="text-edit-area"
+                placeholder="Edit extracted text..."
+              />
+            ) : (
+              <pre>{currentText}</pre>
+            )}
+          </div>
+          <div className="card-footer">
+            <div className="flex gap-2 items-center justify-center">
               {!isEditing ? (
                 <>
                   <button
@@ -368,40 +411,6 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
             </div>
           </div>
 
-          <div className="text-content">
-            {isEditing ? (
-              <textarea
-                value={currentText}
-                onChange={handleTextChange}
-                className="text-edit-area"
-                placeholder="Edit extracted text..."
-              />
-            ) : (
-              <pre>{currentText}</pre>
-            )}
-          </div>
-
-          {totalTextPages > 1 && (
-            <div className="page-nav-bottom">
-              <button
-                onClick={handlePrevTextPage}
-                disabled={textPage === 0}
-                className="page-nav-btn"
-              >
-                ← Back
-              </button>
-              <span className="page-indicator">
-                Page {textPage + 1} of {totalTextPages}
-              </span>
-              <button
-                onClick={handleNextTextPage}
-                disabled={textPage === totalTextPages - 1}
-                className="page-nav-btn"
-              >
-                Next →
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -455,6 +464,31 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
           box-shadow: var(--shadow-glass);
           border: 1px solid var(--color-border);
         }
+        
+        .process-new-btn {
+          margin-left: auto;
+          background: var(--color-surface);
+          backdrop-filter: var(--blur-md);
+          -webkit-backdrop-filter: var(--blur-md);
+          border: 1px solid var(--color-border);
+          color: var(--color-text);
+          font-weight: 600;
+          padding: 0.625rem 1.25rem;
+          border-radius: var(--radius-full);
+          transition: all 0.3s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          box-shadow: var(--shadow-sm);
+          font-size: 0.875rem;
+          cursor: pointer;
+        }
+        .process-new-btn:hover {
+          background: var(--color-surface-hover);
+          border-color: var(--color-accent);
+          transform: translateX(-4px);
+          box-shadow: var(--shadow-md);
+        }
 
         .doc-label {
           font-size: 0.875rem;
@@ -500,7 +534,7 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
 
         .comparison-grid {
           display: grid;
-          grid-template-columns: 1fr 2fr;
+          grid-template-columns: 1fr 1fr;
           gap: 2rem;
           min-width: 1000px;
           overflow-x: auto;
@@ -532,8 +566,8 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
         }
         
         .text-card, .image-card {
-          min-height: 75vh;
-          max-height: 80vh;
+          min-height: 90vh;
+          max-height: 95vh;
           display: flex;
           flex-direction: column;
         }
@@ -546,6 +580,7 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
           -webkit-backdrop-filter: var(--blur-md);
           flex-shrink: 0;
         }
+        
         .card-header h3 {
           font-size: 1.125rem;
           margin: 0;
@@ -553,15 +588,23 @@ export default function ResultViewer({ results, onAddTag, onRemoveTag }) {
           font-weight: 600;
           color: var(--color-primary);
         }
-
-        .page-nav-bottom {
+        
+        .card-footer {
+          padding: 1rem 1.5rem;
+          border-top: 1px solid var(--color-border);
+          background: var(--gradient-glass);
+          backdrop-filter: var(--blur-md);
+          -webkit-backdrop-filter: var(--blur-md);
+          flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .page-nav-top {
+          display: flex;
+          align-items: center;
           gap: 1rem;
-          padding: 1rem;
-          background: var(--color-surface);
-          border-top: 1px solid var(--color-border);
         }
 
         .page-nav-btn {

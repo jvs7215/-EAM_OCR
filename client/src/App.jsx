@@ -236,7 +236,7 @@ function App() {
             {error && <div className="error-message">{error}</div>}
 
             <div className="info-section">
-              <h3>Works Best With:</h3>
+              <h3>Tesseract OCR Works Best With:</h3>
               <ul className="info-list">
                 <li>✓ Typed or printed documents</li>
                 <li>✓ Clear scans and photos</li>
@@ -244,7 +244,7 @@ function App() {
                 <li>✓ PDFs with image content</li>
               </ul>
 
-              <h3>Limitations:</h3>
+              <h3>Tesseract OCR Limitations:</h3>
               <ul className="info-list">
                 <li>✗ Handwritten text (low accuracy)</li>
                 <li>✗ Heavily damaged documents</li>
@@ -281,13 +281,11 @@ function App() {
 
         {result && result.length > 0 && !loading && (
           <div className="result-section animate-fade-in">
-            <button onClick={handleReset} className="back-button mb-2">
-              ← Process New Documents
-            </button>
             <ResultViewer
               results={result}
               onAddTag={handleAddTag}
               onRemoveTag={handleRemoveTag}
+              onReset={handleReset}
             />
           </div>
         )}
@@ -305,19 +303,16 @@ function App() {
           flex-direction: column;
         }
         .header {
-          padding: 1.5rem 0;
+          padding: 0.875rem 0;
           background: var(--color-surface);
           backdrop-filter: var(--blur-lg);
           -webkit-backdrop-filter: var(--blur-lg);
           border-bottom: 1px solid var(--color-border);
-          margin-bottom: 4rem;
+          margin-bottom: 2rem;
           box-shadow: var(--shadow-glass);
-          position: sticky;
-          top: 0;
-          z-index: 100;
         }
         .logo h1 {
-          font-size: 1.75rem;
+          font-size: 1.5rem;
           letter-spacing: -0.03em;
           font-family: var(--font-display);
           font-weight: 700;
@@ -332,7 +327,7 @@ function App() {
           color: #a78bfa;
         }
         .subtitle {
-          font-size: 0.875rem;
+          font-size: 0.75rem;
           color: var(--color-text-light);
           font-weight: 400;
           margin-top: 0.25rem;
@@ -433,36 +428,15 @@ function App() {
           align-items: center;
           gap: 0.5rem;
         }
-        .back-button {
-          background: var(--color-surface);
-          backdrop-filter: var(--blur-md);
-          -webkit-backdrop-filter: var(--blur-md);
-          border: 1px solid var(--color-border);
-          color: var(--color-text);
-          font-weight: 600;
-          padding: 0.75rem 1.5rem;
-          border-radius: var(--radius-full);
-          transition: all 0.3s ease;
-          margin-bottom: 1.5rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          box-shadow: var(--shadow-sm);
-        }
-        .back-button:hover {
-          background: var(--color-surface-hover);
-          border-color: var(--color-accent);
-          transform: translateX(-4px);
-          box-shadow: var(--shadow-md);
-        }
         .footer {
-          padding: 2rem;
+          padding: 0.875rem 0;
           color: var(--color-text-light);
           font-size: 0.875rem;
           border-top: 1px solid var(--color-border);
           background: var(--color-surface);
-          backdrop-filter: var(--blur-md);
-          -webkit-backdrop-filter: var(--blur-md);
+          backdrop-filter: var(--blur-lg);
+          -webkit-backdrop-filter: var(--blur-lg);
+          box-shadow: var(--shadow-glass);
         }
         .footer-credit {
           margin-top: 0.5rem;
